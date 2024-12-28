@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>ca-connector-svc</AssemblyName>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishSingleFile>false</PublishSingleFile>
+    <AssemblyVersion>0.0.0.1</AssemblyVersion>
+    <FileVersion>0.0.0.1</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="9.0.0" />
+    <PackageReference Include="System.Net.Http.Json" Version="9.0.0" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
+    <PackageReference Include="Dapper" Version="2.1.35" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Abstractions" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="9.0.0" />
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="9.0.0" />
+  </ItemGroup>
+</Project> 

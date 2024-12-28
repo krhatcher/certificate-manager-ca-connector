@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="WixToolset.Sdk/5.0.0">
+  <PropertyGroup>
+    <OutputName>ca-connector</OutputName>
+    <OutputType>Package</OutputType>
+    <Platform>x64</Platform>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <SuppressIces>ICE38</SuppressIces>
+    <DefineConstants>
+      ServiceSourcePath=..\Service\bin\Release\net8.0\win-x64\publish;
+      UISourcePath=..\UI\bin\Release\net8.0-windows\win-x64\publish
+    </DefineConstants>
+    <ProjectGuid>{1f939cc2-fa8d-4619-b6d9-29985cbd199e}</ProjectGuid>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="WixToolset.UI.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Util.wixext" Version="5.0.2" />
+    <PackageReference Include="WixToolset.Heat" Version="5.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <HarvestDirectory Include="..\UI\bin\Release\net8.0-windows\win-x64\publish">
+      <ComponentGroupName>UIFiles</ComponentGroupName>
+      <DirectoryRefId>UIDir</DirectoryRefId>
+      <SuppressRootDirectory>true</SuppressRootDirectory>
+      <PreprocessorVariable>var.UISourcePath</PreprocessorVariable>
+    </HarvestDirectory>
+  </ItemGroup>
+</Project>

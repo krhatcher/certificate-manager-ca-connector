@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+  xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="CA Connector"
+    Manufacturer="SCFT"
+    Version="1.0.0.0"
+    UpgradeCode="4F485FE2-8F10-4203-9CAE-4A4C0F6B7A4F"
+    InstallerVersion="500"
+    Scope="perMachine">
+
+    <MajorUpgrade Schedule="afterInstallInitialize"
+      DowngradeErrorMessage="A newer version is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="MSIUSEREALADMINDETECTION" Value="1" />
+
+    <Feature Id="Main" Title="CA Connector" Level="1">
+      <ComponentGroupRef Id="ServiceComponents" />
+      <ComponentGroupRef Id="ServiceSQLiteComponents" />
+      <ComponentGroupRef Id="UIFiles" />
+      <ComponentGroupRef Id="StartupComponents" />
+      <ComponentGroupRef Id="DataFolders" />
+      <ComponentGroupRef Id="StartMenuComponents" />
+    </Feature>
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+
+    <!-- Directory structure -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="CA Connector">
+        <Directory Id="ServiceDir" Name="Service">
+          <Directory Id="ServiceRuntimesDir" Name="runtimes">
+            <Directory Id="ServiceRuntimesWinDir" Name="win">
+              <Directory Id="ServiceRuntimesWinLibDir" Name="lib">
+                <Directory Id="ServiceRuntimesWinLibNet8Dir" Name="net8.0" />
+              </Directory>
+            </Directory>
+            <Directory Id="ServiceRuntimesWin64Dir" Name="win-x64">
+              <Directory Id="ServiceRuntimesWin64NativeDir" Name="native" />
+            </Directory>
+            <Directory Id="ServiceRuntimesWin86Dir" Name="win-x86">
+              <Directory Id="ServiceRuntimesWin86NativeDir" Name="native" />
+            </Directory>
+          </Directory>
+        </Directory>
+        <Directory Id="UIDir" Name="UI" />
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="CommonAppDataFolder">
+      <Directory Id="AppDataCompanyFolder" Name="SCFT">
+        <Directory Id="AppDataProductFolder" Name="CA Connector">
+          <Directory Id="LogsFolder" Name="logs" />
+          <Directory Id="SecureFolder" Name="secure" />
+        </Directory>
+      </Directory>
+    </StandardDirectory>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="ApplicationProgramsFolder" Name="CA Connector"/>
+    </StandardDirectory>
+  </Package>
+
+  <!-- Component groups -->
+  <Fragment>
+    <?define ServiceSourcePath = "..\Service\bin\Release\net8.0\win-x64\publish"?>
+
+    <ComponentGroup Id="StartMenuComponents" Directory="ApplicationProgramsFolder">
+      <Component Id="StartMenuShortcut" Guid="{30345678-3034-4321-ABCD-303456789012}">
+        <Shortcut Id="ApplicationStartMenuShortcut"
+          Name="CA Connector"
+          Description="CA Connector"
+          Target="[UIDir]ca-connector-ui.exe"
+          WorkingDirectory="UIDir"
+          Icon="AppIcon"/>
+        <RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\SCFT\CA Connector" Name="installed" Type="integer" Value="1" KeyPath="yes"/>
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="StartupComponents" Directory="INSTALLFOLDER">
+      <Component Id="AutostartForAllUsers" Guid="{28123456-2812-4321-ABCD-281234567890}">
+        <RegistryValue Root="HKLM" 
+                      Key="Software\Microsoft\Windows\CurrentVersion\Run" 
+                      Name="CA Connector" 
+                      Value="[UIDir]ca-connector-ui.exe" 
+                      Type="string" 
+                      KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="DataFolders" Directory="AppDataProductFolder">
+      <Component Id="LogsFolder" Guid="{ABCD4123-1234-1234-1234-123412341234}">
+        <RegistryValue Root="HKLM"
+          Key="Software\SCFT\CA Connector"
+          Name="LogsFolder"
+          Type="string"
+          Value="[LogsFolder]"
+          KeyPath="yes" />
+        <CreateFolder Directory="LogsFolder">
+          <Permission User="Users" GenericAll="yes" />
+        </CreateFolder>
+        <RemoveFolder Id="RemoveLogsFolder" Directory="LogsFolder" On="uninstall" />
+      </Component>
+      <Component Id="SecureFolder" Guid="{ABCD5123-1234-1234-1234-123412341234}">
+        <RegistryValue Root="HKLM"
+          Key="Software\SCFT\CA Connector"
+          Name="SecureFolder"
+          Type="string"
+          Value="[SecureFolder]"
+          KeyPath="yes" />
+        <CreateFolder Directory="SecureFolder">
+          <Permission User="Users" GenericAll="yes" />
+        </CreateFolder>
+        <RemoveFolder Id="RemoveSecureFolder" Directory="SecureFolder" On="uninstall" />
+      </Component>
+    </ComponentGroup>
+
+    <ComponentGroup Id="ServiceComponents" Directory="ServiceDir">
+      <Component Id="ServiceExe" Guid="{C89E80D4-0B74-4F81-A48E-1E93D2BABCD4}">
+        <File Id="ServiceExe" Source="$(var.ServiceSourcePath)\ca-connector-svc.exe" KeyPath="yes" />
+        <ServiceInstall Id="ServiceInstaller"
+          Type="ownProcess"
+          Name="CAConnector"
+          DisplayName="CA Connector Service"
+          Description="Manages certificate operations and notifications"
+          Start="auto"
+          Account="LocalSystem"
+          ErrorControl="normal"
+          Vital="yes" />
+        <ServiceControl Id="StartService"
+          Start="install"
+          Stop="both"
+          Remove="uninstall"
+          Name="CAConnector"
+          Wait="yes" />
+      </Component>
+
+      <Component Id="ServiceRuntimeConfig"
+        Guid="{A2E6517F-D9D8-4CD3-A587-8468A96DD8F3}">
+        <File Id="ServiceRuntimeConfig" Source="$(var.ServiceSourcePath)\ca-connector-svc.runtimeconfig.json"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="ServiceDepsJson"
+        Guid="{B7F9C823-7953-4F81-A4E9-7B2F8E5D0C12}">
+        <File Id="ServiceDepsJson" Source="$(var.ServiceSourcePath)\ca-connector-svc.deps.json" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="ServiceDll" Guid="{D1234567-1234-4321-ABCD-12345678ABCD}">
+        <File Id="ServiceDll" Source="$(var.ServiceSourcePath)\ca-connector-svc.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="SharedDll" Guid="{E2345678-2345-4321-ABCD-23456789ABCD}">
+        <File Id="SharedDll" Source="$(var.ServiceSourcePath)\Shared.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="DapperDll" Guid="{F3456789-3456-4321-ABCD-34567890ABCD}">
+        <File Id="DapperDll" Source="$(var.ServiceSourcePath)\Dapper.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="ConfigurationAbstractionsDll" Guid="{F4567890-4567-4321-ABCD-45678901ABCD}">
+        <File Id="ConfigurationAbstractionsDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Configuration.Abstractions.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="ConfigurationBinderDll"
+        Guid="{F5678901-5678-4321-ABCD-56789012ABCD}">
+        <File Id="ConfigurationBinderDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Configuration.Binder.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="ConfigurationCommandLineDll"
+        Guid="{F6789012-6789-4321-ABCD-67890123ABCD}">
+        <File Id="ConfigurationCommandLineDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Configuration.CommandLine.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="ConfigurationDll"
+        Guid="{F7890123-7890-4321-ABCD-78901234ABCD}">
+        <File Id="ConfigurationDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Configuration.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="ConfigurationEnvironmentVariablesDll"
+        Guid="{F8901234-8901-4321-ABCD-89012345ABCD}">
+        <File Id="ConfigurationEnvironmentVariablesDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Configuration.EnvironmentVariables.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="ConfigurationFileExtensionsDll"
+        Guid="{F9012345-9012-4321-ABCD-90123456ABCD}">
+        <File Id="ConfigurationFileExtensionsDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Configuration.FileExtensions.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="ConfigurationJsonDll"
+        Guid="{FA123456-A123-4321-ABCD-A1234567ABCD}">
+        <File Id="ConfigurationJsonDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Configuration.Json.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="ConfigurationUserSecretsDll"
+        Guid="{FB234567-B234-4321-ABCD-B2345678ABCD}">
+        <File Id="ConfigurationUserSecretsDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Configuration.UserSecrets.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="DependencyInjectionAbstractionsDll"
+        Guid="{FC345678-C345-4321-ABCD-C3456789ABCD}">
+        <File Id="DependencyInjectionAbstractionsDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.DependencyInjection.Abstractions.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="DependencyInjectionDll"
+        Guid="{FD456789-D456-4321-ABCD-D4567890ABCD}">
+        <File Id="DependencyInjectionDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.DependencyInjection.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="HostingAbstractionsDll"
+        Guid="{FE567890-E567-4321-ABCD-E5678901ABCD}">
+        <File Id="HostingAbstractionsDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Hosting.Abstractions.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="HostingDll"
+        Guid="{FF678901-F678-4321-ABCD-F6789012ABCD}">
+        <File Id="HostingDll" Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Hosting.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="HostingWindowsServicesDll"
+        Guid="{00789012-0789-4321-ABCD-07890123ABCD}">
+        <File Id="HostingWindowsServicesDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Hosting.WindowsServices.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="DiagnosticsDll"
+        Guid="{01890123-1890-4321-ABCD-18901234ABCD}">
+        <File Id="DiagnosticsDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Diagnostics.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="DiagnosticsAbstractionsDll" Guid="{02901234-2901-4321-ABCD-29012345ABCD}">
+        <File Id="DiagnosticsAbstractionsDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Diagnostics.Abstractions.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="HttpDll"
+        Guid="{03012345-3012-4321-ABCD-30123456ABCD}">
+        <File Id="HttpDll" Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Http.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="LoggingDll"
+        Guid="{04123456-4123-4321-ABCD-41234567ABCD}">
+        <File Id="LoggingDll" Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Logging.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="LoggingAbstractionsDll"
+        Guid="{05234567-5234-4321-ABCD-52345678ABCD}">
+        <File Id="LoggingAbstractionsDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Logging.Abstractions.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="LoggingConfigurationDll"
+        Guid="{06345678-6345-4321-ABCD-63456789ABCD}">
+        <File Id="LoggingConfigurationDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Logging.Configuration.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="LoggingConsoleDll"
+        Guid="{07456789-7456-4321-ABCD-74567890ABCD}">
+        <File Id="LoggingConsoleDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Logging.Console.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="LoggingDebugDll" Guid="{08567890-8567-4321-ABCD-85678901ABCD}">
+        <File Id="LoggingDebugDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Logging.Debug.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="LoggingEventLogDll" Guid="{09678901-9678-4321-ABCD-96789012ABCD}">
+        <File Id="LoggingEventLogDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Logging.EventLog.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="LoggingEventSourceDll" Guid="{0A789012-A789-4321-ABCD-A7890123ABCD}">
+        <File Id="LoggingEventSourceDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Logging.EventSource.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="OptionsConfigurationExtensionsDll"
+        Guid="{0B890123-B890-4321-ABCD-B8901234ABCD}">
+        <File Id="OptionsConfigurationExtensionsDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Options.ConfigurationExtensions.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="OptionsDll"
+        Guid="{0C901234-C901-4321-ABCD-C9012345ABCD}">
+        <File Id="OptionsDll" Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Options.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="PrimitivesDll"
+        Guid="{0D012345-D012-4321-ABCD-D0123456ABCD}">
+        <File Id="PrimitivesDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.Primitives.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="SerilogDll" Guid="{0E123456-E123-4321-ABCD-E1234567ABCD}">
+        <File Id="SerilogDll" Source="$(var.ServiceSourcePath)\Serilog.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="SerilogExtensionsHostingDll" Guid="{0F234567-F234-4321-ABCD-F2345678ABCD}">
+        <File Id="SerilogExtensionsHostingDll"
+          Source="$(var.ServiceSourcePath)\Serilog.Extensions.Hosting.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="SerilogExtensionsLoggingDll" Guid="{10345678-1034-4321-ABCD-10345678ABCD}">
+        <File Id="SerilogExtensionsLoggingDll"
+          Source="$(var.ServiceSourcePath)\Serilog.Extensions.Logging.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="SerilogSinksConsoleDll" Guid="{11456789-1145-4321-ABCD-11456789ABCD}">
+        <File Id="SerilogSinksConsoleDll"
+          Source="$(var.ServiceSourcePath)\Serilog.Sinks.Console.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="SerilogSinksFileDll" Guid="{12567890-1256-4321-ABCD-12567890ABCD}">
+        <File Id="SerilogSinksFileDll" Source="$(var.ServiceSourcePath)\Serilog.Sinks.File.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="SocketIOCoreDll"
+        Guid="{13678901-1367-4321-ABCD-13678901ABCD}">
+        <File Id="SocketIOCoreDll" Source="$(var.ServiceSourcePath)\SocketIO.Core.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="SocketIOSerializerCoreDll" Guid="{14789012-1478-4321-ABCD-14789012ABCD}">
+        <File Id="SocketIOSerializerCoreDll"
+          Source="$(var.ServiceSourcePath)\SocketIO.Serializer.Core.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="SocketIOSerializerSystemTextJsonDll"
+        Guid="{15890123-1589-4321-ABCD-15890123ABCD}">
+        <File Id="SocketIOSerializerSystemTextJsonDll"
+          Source="$(var.ServiceSourcePath)\SocketIO.Serializer.SystemTextJson.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="SocketIOClientDll" Guid="{16901234-1690-4321-ABCD-16901234ABCD}">
+        <File Id="SocketIOClientDll" Source="$(var.ServiceSourcePath)\SocketIOClient.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="SystemDataSQLiteDll"
+        Guid="{17012345-1701-4321-ABCD-17012345ABCD}">
+        <File Id="SystemDataSQLiteDll" Source="$(var.ServiceSourcePath)\System.Data.SQLite.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="SystemDiagnosticsEventLogDll"
+        Guid="{18123456-1812-4321-ABCD-18123456ABCD}">
+        <File Id="SystemDiagnosticsEventLogDll"
+          Source="$(var.ServiceSourcePath)\System.Diagnostics.EventLog.dll" KeyPath="yes" />
+      </Component>
+
+      <Component
+        Id="SystemSecurityCryptographyProtectedDataDll"
+        Guid="{19234567-1923-4321-ABCD-19234567ABCD}">
+        <File Id="SystemSecurityCryptographyProtectedDataDll"
+          Source="$(var.ServiceSourcePath)\System.Security.Cryptography.ProtectedData.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="SystemServiceProcessServiceControllerDll"
+        Guid="{20345678-2034-4321-ABCD-20345678ABCD}">
+        <File Id="SystemServiceProcessServiceControllerDll"
+          Source="$(var.ServiceSourcePath)\System.ServiceProcess.ServiceController.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="FileProvidersAbstractionsDll"
+        Guid="{21456789-2145-4321-ABCD-21456789ABCD}">
+        <File Id="FileProvidersAbstractionsDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.FileProviders.Abstractions.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="FileProvidersPhysicalDll"
+        Guid="{22567890-2256-4321-ABCD-22567890ABCD}">
+        <File Id="FileProvidersPhysicalDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.FileProviders.Physical.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="FileSystemGlobbingDll"
+        Guid="{23678901-2367-4321-ABCD-23678901ABCD}">
+        <File Id="FileSystemGlobbingDll"
+          Source="$(var.ServiceSourcePath)\Microsoft.Extensions.FileSystemGlobbing.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="SystemDiagnosticsDiagnosticSource"
+        Guid="{26678201-2666-4121-ABCD-23676101ABCA}">
+        <File Id="SystemDiagnosticsDiagnosticSource"
+          Source="$(var.ServiceSourcePath)\System.Diagnostics.DiagnosticSource.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="SystemTextJson"
+        Guid="{26677211-2566-1221-CACD-23676701BBC2}">
+        <File Id="SystemTextJson"
+          Source="$(var.ServiceSourcePath)\System.Text.Json.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="SystemTextEncodingsWeb"
+        Guid="{26677211-2516-1221-CBCD-26686701ABC2}">
+        <File Id="SystemTextEncodingsWeb"
+          Source="$(var.ServiceSourcePath)\System.Text.Encodings.Web.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="SystemIOPipelines"
+        Guid="{26817211-2116-1221-BBCD-26688701ABC2}">
+        <File Id="SystemIOPipelines"
+          Source="$(var.ServiceSourcePath)\System.IO.Pipelines.dll"
+          KeyPath="yes" />
+      </Component>
+
+      <Component Id="SystemNetHttpJson"
+        Guid="{21817211-2111-1221-ACCA-96688711ABC3}">
+        <File Id="SystemNetHttpJson"
+          Source="$(var.ServiceSourcePath)\System.Net.Http.Json.dll"
+          KeyPath="yes" />
+      </Component>
+      
+      
+    </ComponentGroup>
+
+    <ComponentGroup Id="ServiceSQLiteComponents" Directory="ServiceDir">
+      <Component Id="SQLiteInteropX64" Guid="{26901234-2690-4321-ABCD-26901234ABCD}">
+        <File Id="SQLiteInteropX64Dll"
+          Source="$(var.ServiceSourcePath)\SQLite.Interop.dll"
+          KeyPath="yes" />
+      </Component>
+    </ComponentGroup>
+
+    <!-- Icon definition -->
+    <Icon Id="AppIcon" SourceFile="$(var.UISourcePath)\Resources\app.ico"/>
+  </Fragment>
+</Wix> 
